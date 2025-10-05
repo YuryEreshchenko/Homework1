@@ -1,9 +1,9 @@
 /*Yury Ereshchenko 114012010
 This codes controls the RGB light
-It cycles the colors of RedLEDPin, GreenLEDPin, BlueLEDPin, yellow, pink, turquoise and white
+When clicking you can change color, Double clicking turns the LED ON/OFF
 
 
-09/24/2025
+05/10/2025
 
 */
 
@@ -15,15 +15,21 @@ const int BlueLEDPin = 11;
 
 const int pushButton = 2;
 int pushButtonState = 0;
-int ledCounter = 0;
+int ledCounter = 1;
 
 bool buttonPressed = false;
 
 String currentColor = "OFF";
 
-bool ledState = LOW;
-unsigned long previousMillis = 0;
-const long interval = 10000;
+bool ledState = HIGH;
+unsigned long previousMillis_blink = 0;
+const long interval_blink = 1000;
+
+unsigned long previousMillis_DClick = 0;
+const long interval_DClick = 250;
+int clickNum = 1;
+bool PowerFlag = LOW;
+
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -43,45 +49,71 @@ void setup() {
 // the loop function runs over and over again forever
 void loop() {
 
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    if (ledState == LOW) {
-      ledState = HIGH;
-    } else {
-      ledState = LOW;
-    }
-  }
-  Serial.print("Current Color : ");
-  Serial.println(currentColor);
-
-  pushButtonState = digitalRead(pushButton);
+  //////////////////////////////////////////////////////////////////////////////////
   //Inverse the state becuase module gives the opposite
-  if (pushButtonState == LOW) {
+  pushButtonState = digitalRead(pushButton);
+    if (pushButtonState == LOW) {
     pushButtonState = HIGH;
   } else if (pushButtonState == HIGH) {
     pushButtonState = LOW;
   }
 
+
+  Serial.print("Current Color : ");
+  Serial.println(currentColor);
+  Serial.println(PowerFlag);
+
+
+  //Millis for ON/OFF finction for double click
+  unsigned long currentMillis_DClick = millis();
+  
   if (pushButtonState == HIGH && !buttonPressed) {
     ledCounter++;
     buttonPressed = true;
     delay(5);  //Debounce
+
+     if (currentMillis_DClick - previousMillis_DClick < interval_DClick) {
+    clickNum++;
+    }
+
+    if (clickNum == 2){
+      PowerFlag = !PowerFlag;
+      clickNum = 0;
+    }
+
+    else {
+      clickNum = 1;
+    }
+
+    previousMillis_DClick = currentMillis_DClick;
+
   } else if (pushButtonState == LOW && buttonPressed) {
     buttonPressed = false;
     delay(5);  //Debounce
   }
+  ///////////////////////////////////////////////////////////////////////////////////
 
-  //OFF
-  if (ledCounter == 0) {
-    TurnColorOFF(RedLEDPin);
-    TurnColorOFF(GreenLEDPin);
-    TurnColorOFF(BlueLEDPin);
-    currentColor = "OFF";
-  }
+
+
+  // //Millis for blinking function
+  // unsigned long currentMillis_blink = millis();
+  // if (currentMillis_blink - previousMillis_blink >= interval_blink) {
+  //   previousMillis_blink = currentMillis_blink;
+  //   if (ledState == LOW) {
+  //     ledState = HIGH;
+  //   } else {
+  //     ledState = LOW;
+  //   }
+  // }
+
+
+
+
+ 
+
 
   //RED
-  if (ledCounter == 1) {
+  if (ledCounter == 1 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
       TurnColorOFF(GreenLEDPin);
@@ -96,7 +128,7 @@ void loop() {
   }
 
   //GREEN
-  else if (ledCounter == 2) {
+  else if (ledCounter == 2 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorOFF(RedLEDPin);
       TurnColorON(GreenLEDPin);
@@ -110,7 +142,7 @@ void loop() {
   }
 
   //BLUE
-  else if (ledCounter == 3) {
+  else if (ledCounter == 3 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorOFF(RedLEDPin);
       TurnColorOFF(GreenLEDPin);
@@ -124,7 +156,7 @@ void loop() {
   }
 
   //YELLOW
-  else if (ledCounter == 4) {
+  else if (ledCounter == 4 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
       TurnColorON(GreenLEDPin);
@@ -141,7 +173,7 @@ void loop() {
   }
 
   //PURPLE
-  else if (ledCounter == 5) {
+  else if (ledCounter == 5 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
       TurnColorOFF(GreenLEDPin);
@@ -156,7 +188,7 @@ void loop() {
   }
 
   //CYAN
-  else if (ledCounter == 6) {
+  else if (ledCounter == 6 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorOFF(RedLEDPin);
       TurnColorON(GreenLEDPin);
@@ -173,7 +205,7 @@ void loop() {
   }
 
   //WHITE
-  else if (ledCounter == 7) {
+  else if (ledCounter == 7 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
       TurnColorON(GreenLEDPin);
@@ -188,8 +220,19 @@ void loop() {
   }
 
   else if (ledCounter == 8) {
+    ledCounter = 1;
+  }
+
+    //OFF
+  if (PowerFlag) {
+    TurnColorOFF(RedLEDPin);
+    TurnColorOFF(GreenLEDPin);
+    TurnColorOFF(BlueLEDPin);
+    currentColor = "OFF";
     ledCounter = 0;
   }
+
+
 }
 
 void TurnColorON(int color) {
