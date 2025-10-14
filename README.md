@@ -13,5 +13,3 @@ Arduino program that controls an RGB LED using a push button. Single click chang
 ## Features
 
 - Serial monitor output shows current color and power state
-`
-}
