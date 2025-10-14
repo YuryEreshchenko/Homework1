@@ -1,118 +1,117 @@
-/*Yury Ereshchenko 114012010
-This codes controls the RGB light
-When clicking you can change color, Double clicking turns the LED ON/OFF
+/*
+ * Yury Ereshchenko 114012010
+ * RGB LED Controller with Button Interface
+ * 
+ * Single click: Cycle through colors
+ * Double click: Toggle LED ON/OFF
+ * The LED color and state are indiciated in the serial monitor
+ * 
+ * Date: 14/10/2025
+ */
 
-
-05/10/2025
-
-*/
-
-
-//Setup Arduino pins
+// Pin configuration
 const int RedLEDPin = 9;
 const int GreenLEDPin = 10;
 const int BlueLEDPin = 11;
-
 const int pushButton = 2;
-int pushButtonState = 0;
-int ledCounter = 1;
 
-bool buttonPressed = false;
+// Button state variables
+int pushButtonState = 0;
+int ledCounter = 1;           // Tracks current color (1-7)
+bool buttonPressed = false;   // Prevents multiple triggers from single press
 
 String currentColor = "OFF";
 
+// LED state (currently always HIGH since blinking is disabled)
 bool ledState = HIGH;
-unsigned long previousMillis_blink = 0;
-const long interval_blink = 1000;
 
+// Double-click detection variables
 unsigned long previousMillis_DClick = 0;
-const long interval_DClick = 250;
+const long interval_DClick = 250;     // Max time (ms) between clicks for double-click
 int clickNum = 1;
-bool PowerFlag = LOW;
+bool PowerFlag = LOW;                 // Power state: LOW = on, HIGH = off
 
 
-// the setup function runs once when you press reset or power the board
+// !!!Blinking functionality (disabled)!!!!
+// Uncomment to make LEDs blink at 1-second intervals
+/* Blinking variables (currently disabled)
+unsigned long previousMillis_blink = 0;
+const long interval_blink = 1000; 
+*/
+
 void setup() {
-
   Serial.begin(9600);
 
   pinMode(RedLEDPin, OUTPUT);
   pinMode(GreenLEDPin, OUTPUT);
   pinMode(BlueLEDPin, OUTPUT);
-
   pinMode(pushButton, INPUT);
 }
 
-
-
-
-// the loop function runs over and over again forever
 void loop() {
 
-  //////////////////////////////////////////////////////////////////////////////////
-  //Inverse the state becuase module gives the opposite
+  // Invert button state because hardware module gives opposite logic
   pushButtonState = digitalRead(pushButton);
-    if (pushButtonState == LOW) {
+  if (pushButtonState == LOW) {
     pushButtonState = HIGH;
   } else if (pushButtonState == HIGH) {
     pushButtonState = LOW;
   }
 
-
+  // Debug output
   Serial.print("Current Color : ");
   Serial.println(currentColor);
   Serial.println(PowerFlag);
 
-
-  //Millis for ON/OFF finction for double click
+  // Double-click detection and color cycling
   unsigned long currentMillis_DClick = millis();
   
+  // Detect button press
   if (pushButtonState == HIGH && !buttonPressed) {
-    ledCounter++;
+    ledCounter++;              // Advance to next color
     buttonPressed = true;
-    delay(5);  //Debounce
+    delay(5);                  // Debounce
 
-     if (currentMillis_DClick - previousMillis_DClick < interval_DClick) {
-    clickNum++;
+    // Check if this press is within double-click window
+    if (currentMillis_DClick - previousMillis_DClick < interval_DClick) {
+      clickNum++;
     }
 
-    if (clickNum == 2){
+    // Double-click detected - toggle power
+    if (clickNum == 2) {
       PowerFlag = !PowerFlag;
       clickNum = 0;
     }
-
     else {
       clickNum = 1;
     }
 
     previousMillis_DClick = currentMillis_DClick;
 
-  } else if (pushButtonState == LOW && buttonPressed) {
+  } 
+  // Detect button release
+  else if (pushButtonState == LOW && buttonPressed) {
     buttonPressed = false;
-    delay(5);  //Debounce
+    delay(5);                  // Debounce
   }
-  ///////////////////////////////////////////////////////////////////////////////////
 
+  // Blinking functionality (disabled)
+  // Uncomment to make LEDs blink at 1-second intervals
+  /*
+  unsigned long currentMillis_blink = millis();
+  if (currentMillis_blink - previousMillis_blink >= interval_blink) {
+    previousMillis_blink = currentMillis_blink;
+    if (ledState == LOW) {
+      ledState = HIGH;
+    } else {
+      ledState = LOW;
+    }
+  }
+  */
 
-
-  // //Millis for blinking function
-  // unsigned long currentMillis_blink = millis();
-  // if (currentMillis_blink - previousMillis_blink >= interval_blink) {
-  //   previousMillis_blink = currentMillis_blink;
-  //   if (ledState == LOW) {
-  //     ledState = HIGH;
-  //   } else {
-  //     ledState = LOW;
-  //   }
-  // }
-
-
-
-
- 
-
-
-  //RED
+  // Color selection - only active if power is ON (!PowerFlag)
+  
+  // RED
   if (ledCounter == 1 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
@@ -123,11 +122,10 @@ void loop() {
       TurnColorOFF(GreenLEDPin);
       TurnColorOFF(BlueLEDPin);
     }
-
     currentColor = "RED";
   }
 
-  //GREEN
+  // GREEN
   else if (ledCounter == 2 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorOFF(RedLEDPin);
@@ -141,7 +139,7 @@ void loop() {
     currentColor = "GREEN";
   }
 
-  //BLUE
+  // BLUE
   else if (ledCounter == 3 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorOFF(RedLEDPin);
@@ -155,24 +153,21 @@ void loop() {
     currentColor = "BLUE";
   }
 
-  //YELLOW
+  // YELLOW (Red + Green)
   else if (ledCounter == 4 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
       TurnColorON(GreenLEDPin);
       TurnColorOFF(BlueLEDPin);
-    }
-
-    else {
+    } else {
       TurnColorOFF(RedLEDPin);
       TurnColorOFF(GreenLEDPin);
       TurnColorOFF(BlueLEDPin);
     }
-
-    currentColor = ("YELLOW");
+    currentColor = "YELLOW";
   }
 
-  //PURPLE
+  // PURPLE (Red + Blue)
   else if (ledCounter == 5 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
@@ -183,28 +178,24 @@ void loop() {
       TurnColorOFF(GreenLEDPin);
       TurnColorOFF(BlueLEDPin);
     }
-
     currentColor = "PURPLE";
   }
 
-  //CYAN
+  // CYAN (Green + Blue)
   else if (ledCounter == 6 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorOFF(RedLEDPin);
       TurnColorON(GreenLEDPin);
       TurnColorON(BlueLEDPin);
-    }
-
-    else {
+    } else {
       TurnColorOFF(RedLEDPin);
       TurnColorOFF(GreenLEDPin);
       TurnColorOFF(BlueLEDPin);
     }
-
     currentColor = "CYAN";
   }
 
-  //WHITE
+  // WHITE (Red + Green + Blue)
   else if (ledCounter == 7 && !PowerFlag) {
     if (ledState == HIGH) {
       TurnColorON(RedLEDPin);
@@ -215,15 +206,15 @@ void loop() {
       TurnColorOFF(GreenLEDPin);
       TurnColorOFF(BlueLEDPin);
     }
-
     currentColor = "WHITE";
   }
 
+  // Reset counter to cycle back to first color
   else if (ledCounter == 8) {
     ledCounter = 1;
   }
 
-    //OFF
+  // Power OFF - turn off all LEDs
   if (PowerFlag) {
     TurnColorOFF(RedLEDPin);
     TurnColorOFF(GreenLEDPin);
@@ -231,14 +222,14 @@ void loop() {
     currentColor = "OFF";
     ledCounter = 0;
   }
-
-
 }
 
+// Functions to Turn ON and OFF led to make code more readable
+// Note: Uses LOW to turn ON and HIGH to turn OFF (common anode RGB LED)
 void TurnColorON(int color) {
-  digitalWrite(color, LOW);  // turn the led (HIGH is the voltage level)
+  digitalWrite(color, LOW);
 }
 
 void TurnColorOFF(int color) {
-  digitalWrite(color, HIGH);  // turn the led (HIGH is the voltage level)
+  digitalWrite(color, HIGH);
 }
