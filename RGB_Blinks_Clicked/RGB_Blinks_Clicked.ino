@@ -6,7 +6,7 @@
  * Double click: Toggle LED ON/OFF
  * The LED color and state are indiciated in the serial monitor
  * 
- * Date: 14/10/2025
+ * Date: 15/10/2025
  */
 
 // Pin configuration
@@ -110,7 +110,7 @@ void loop() {
   */
 
   // Color selection - only active if power is ON (!PowerFlag)
-  
+
   // RED
   if (ledCounter == 1 && !PowerFlag) {
     if (ledState == HIGH) {
